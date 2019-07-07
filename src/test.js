@@ -38,10 +38,15 @@ const userName = name.value;
 	let result = await miband.getPedometerStats();
   log('Heart Rate Monitor (continuous for 30 sec)...')
   miband.on('heart_rate', (rate) => {
+	try {
     log('Heart Rate:', rate);
 	log('Steps:', result.steps);
 	log(JSON.stringify({id:userName, rate:rate, steps: result.steps, action:"monitoring", lat:lat, lon:lon}));
 	socket.send(JSON.stringify({id:userName, rate:rate, steps: result.steps, action:"monitoring", lat:lat, lon:lon}));
+	} 
+	catch (e) {
+		log(e);
+	}
   })
   await miband.hrmStart();
   
