@@ -5,13 +5,29 @@ function delay(ms) {
 }
 
 async function test_all(miband, log) {
+	var lat = "";
+	var lon = "";
+	function getLocation() {
+	  if (navigator.geolocation) {
+		navigator.geolocation.getCurrentPosition(showPosition);
+	  } 
+	}
 
+	function showPosition(position) {
+	  lat =  position.coords.latitude;
+	  lon = position.coords.longitude; 
+	}
+	getLocation();
+	var socket = new WebSocket("wss://miband.ru.com:8083");
+	const name = document.querySelector('#name');
+const userName = name.value;
   let info = {
     time:     await miband.getTime(),
     battery:  await miband.getBatteryInfo(),
     hw_ver:   await miband.getHwRevision(),
     sw_ver:   await miband.getSwRevision(),
-    serial:   await miband.getSerial(),
+    serial:   await miband.getSerial()
+	
   }
 
   log(`HW ver: ${info.hw_ver}  SW ver: ${info.sw_ver}`);
@@ -19,34 +35,20 @@ async function test_all(miband, log) {
   log(`Battery: ${info.battery.level}%`);
   log(`Time: ${info.time.toLocaleString()}`);
 
-  let ped = await miband.getPedometerStats()
-  log('Pedometer:', JSON.stringify(ped))
-
-  log('Notifications demo...')
-  await miband.showNotification('message');
-  await delay(3000);
-  await miband.showNotification('phone');
-  await delay(5000);
-  await miband.showNotification('off');
-
-  log('Tap MiBand button, quick!')
-  miband.on('button', () => log('Tap detected'))
-  try {
-    await miband.waitButton(10000)
-  } catch (e) {
-    log('OK, nevermind ;)')
-  }
-
-  log('Heart Rate Monitor (single-shot)')
-  log('Result:', await miband.hrmRead())
-
+	let result = await miband.getPedometerStats();
   log('Heart Rate Monitor (continuous for 30 sec)...')
   miband.on('heart_rate', (rate) => {
-    log('Heart Rate:', rate)
+    log('Heart Rate:', rate);
+	log('Steps:', info.result.steps);
+	log(JSON.stringify({id:userName, rate:rate, steps: info.result.steps, action:"monitoring", lat:lat, lon:lon}));
+	socket.send(JSON.stringify({id:userName, rate:rate, steps: info.result.steps, action:"monitoring", lat:lat, lon:lon}));
   })
   await miband.hrmStart();
-  await delay(30000);
-  await miband.hrmStop();
+  
+  while (true) {
+	  result = await miband.getPedometerStats();
+	  await delay(10000);
+  }
 
   //log('RAW data (no decoding)...')
   //miband.rawStart();

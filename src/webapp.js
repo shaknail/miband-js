@@ -1,12 +1,9 @@
-'use strict';
+ 'use strict';
 
 import MiBand from './miband';
 import test_all from './test';
-
 import './styles/index.less';
-
 const bluetooth = navigator.bluetooth;
-
 const output = document.querySelector('#output');
 
 function log() {
@@ -39,7 +36,7 @@ async function scan() {
     log('Connecting to the device...');
     const server = await device.gatt.connect();
     log('Connected');
-
+log('wss://miband.ru.com:8083');
     let miband = new MiBand(server);
 
     await miband.init();
